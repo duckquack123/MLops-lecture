@@ -4,11 +4,12 @@ on:
   push: 
     branches:
       - main
+      - master
   
   pull_request:
     branches:
       - main
-
+      - master
 
 jobs:
   bert-huggingface-wandb-demo:
@@ -17,19 +18,19 @@ jobs:
     env:
       WANDB_PROJECT: wandb demo
       WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
-      HF_TOKEN: ${{secrets.HF_TOKEN}}
-      HF_REPO_ID: DuckyDuck123/hindi-en-demo-model
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HF_REPO_ID: "DuckyDuck123/hindi-en-demo-model"
       UPLOAD_TO_HF: "true"
 
     steps:
       - name: Checkout Repository
-      - uses: actions/checkout@v4
+        uses: actions/checkout@v4
     
       - name: Building the docker image
-      - run: docker build -t bert-huggingface-wandb-demo .
+        run: docker build -t bert-huggingface-wandb-demo .
 
       - name: Run Inference
-      - run: |
+        run: |
           docker run --rm \
             -e WANDB_API_KEY="${WANDB_API_KEY}" \
             -e WANDB_PROJECT="${WANDB_PROJECT}" \
@@ -37,8 +38,3 @@ jobs:
             -e HF_REPO_ID="${HF_REPO_ID}" \
             -e UPLOAD_TO_HF="${UPLOAD_TO_HF}" \
             bert-huggingface-wandb-demo
-
-
-
-
-
