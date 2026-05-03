@@ -2,6 +2,7 @@ import os
 
 import torch
 import wandb
+from huggingface_hub import HfApi, login
 from tqdm import tqdm
 
 try:
@@ -33,6 +34,10 @@ def main() -> None:
         print("[INFO] WANDB_API_KEY not set. Running in test mode without W&B logging.")
 
     model_name = "Helsinki-NLP/opus-mt-hi-en"
+    upload_to_hf = os.environ.get("UPLOAD_TO_HF", "false").lower() == "true"
+    hf_token = os.environ.get("HF_TOKEN")
+    hf_repo_id = os.environ.get("HF_REPO_ID", "DuckyDuck123/hindi-en-demo-model")
+
     print("\n[LOADING] Loading Hindi-to-English translation model from Hugging Face...")
     
     translated_texts = []
@@ -49,6 +54,24 @@ def main() -> None:
             except Exception as e:
                 print(f"[WARNING] Could not load model: {e}")
                 transformers_available = False
+
+    if upload_to_hf:
+        if not transformers_available:
+            print("[WARNING] Skipping Hugging Face upload because model is not available.")
+        elif not hf_token:
+            print("[WARNING] Skipping Hugging Face upload because HF_TOKEN is not set.")
+        else:
+            print(f"\n[UPLOAD] Uploading model and tokenizer to Hugging Face repo: {hf_repo_id}")
+            with tqdm(total=3, desc="HF Upload", unit="step") as pbar:
+                login(token=hf_token)
+                pbar.update(1)
+                api = HfApi()
+                api.create_repo(repo_id=hf_repo_id, repo_type="model", exist_ok=True)
+                pbar.update(1)
+                tokenizer.push_to_hub(hf_repo_id)
+                model.push_to_hub(hf_repo_id)
+                pbar.update(1)
+            print(f"[UPLOAD] Completed: https://huggingface.co/{hf_repo_id}")
 
     texts = [
         "नमस्ते, यह एक हिंदी से अंग्रेजी अनुवाद का डेमो है।",
