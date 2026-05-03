@@ -4,13 +4,15 @@ on:
   push: 
     branches:
       - main
+      - master
   
   pull_request:
     branches:
       - main
+      - master
 
   jobs:
-    bert-huggingfacce-wandb-demo:
+    bert-huggingface-wandb-demo:
       runs-on: ubuntu-latest
 
       env:
@@ -35,7 +37,7 @@ on:
               -e HF_TOKEN = "${HF_TOKEN}" \
               -e HF_REPO_ID = "${HF_REPO_ID}" \
               -e UPLOAD_TO_HF = "${UPLOAD_TO_HF}" \
-              bert-huggingfae-wandb-demo
+              bert-huggingface-wandb-demo
 
 
 
