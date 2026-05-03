@@ -1,5 +1,6 @@
 import os
 
+import torch
 import wandb
 from tqdm import tqdm
 
@@ -11,6 +12,8 @@ except ImportError:
 
 
 def main() -> None:
+    transformers_available = TRANSFORMERS_AVAILABLE
+
     wandb_api_key = os.environ.get("WANDB_API_KEY")
     wandb_project = os.environ.get("WANDB_PROJECT", "TA duty demo project")
 
@@ -34,7 +37,7 @@ def main() -> None:
     
     translated_texts = []
     
-    if TRANSFORMERS_AVAILABLE:
+    if transformers_available:
         with tqdm(total=2, desc="Model Loading", unit="step") as pbar:
             print(f"[INFO] Using model: {model_name}")
             try:
@@ -45,7 +48,7 @@ def main() -> None:
                 model.eval()
             except Exception as e:
                 print(f"[WARNING] Could not load model: {e}")
-                TRANSFORMERS_AVAILABLE = False
+                transformers_available = False
 
     texts = [
         "नमस्ते, यह एक हिंदी से अंग्रेजी अनुवाद का डेमो है।",
@@ -55,12 +58,13 @@ def main() -> None:
 
     print("\n[TRANSLATION] Processing Hindi texts and translating to English...")
     
-    if TRANSFORMERS_AVAILABLE:
+    if transformers_available:
         with tqdm(total=len(texts), desc="Translating", unit="text") as pbar:
             for hindi_text in texts:
                 try:
                     inputs = tokenizer(hindi_text, return_tensors="pt", padding=True)
-                    translated = model.generate(**inputs, max_length=512, num_beams=5, early_stopping=True)
+                    with torch.no_grad():
+                        translated = model.generate(**inputs, max_length=512, num_beams=5, early_stopping=True)
                     translated_text = tokenizer.decode(translated[0], skip_special_tokens=True)
                     translated_texts.append(translated_text)
                 except Exception as e:
@@ -92,7 +96,7 @@ def main() -> None:
                 {
                     "translation_table": table,
                     "total_translations": len(texts),
-                    "model_used": "actual" if TRANSFORMERS_AVAILABLE else "mock",
+                    "model_used": "actual" if transformers_available else "mock",
                 }
             )
             pbar.update(1)
@@ -101,7 +105,7 @@ def main() -> None:
     print("✓ Translation completed successfully!")
     print("="*60)
     print(f"Model: {model_name}")
-    print(f"Inference Type: {'ACTUAL MODEL' if TRANSFORMERS_AVAILABLE else 'MOCK (Model not available)'}")
+    print(f"Inference Type: {'ACTUAL MODEL' if transformers_available else 'MOCK (Model not available)'}")
     print(f"Total translations: {len(translated_texts)}")
     print("\nTranslations:")
     for i, (hindi, english) in enumerate(zip(texts, translated_texts), 1):
